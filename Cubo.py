@@ -54,6 +54,7 @@ class Cubo:
             self.Position[2] += self.Direction[2]
 
     def drawFaces(self):
+        
         glBegin(GL_QUADS)
         glVertex3fv(self.points[0])
         glVertex3fv(self.points[1])
