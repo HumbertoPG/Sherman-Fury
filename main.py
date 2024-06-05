@@ -64,7 +64,7 @@ def Init():
         "left": load_texture('Img/Bosqueizq.png'),
         "right": load_texture('Img/Bosqueder.png'),
         "top": load_texture('Img/Bosquearriba.png'),
-        "bottom": load_texture('Img/prueba.png')
+        "bottom": load_texture('Img/Bosquepiso.png')
     }
 
 def CuboTexturizado():
@@ -141,7 +141,7 @@ while not done:
     glLoadIdentity()
     gluLookAt(posX, posY, posZ,  # Posición de la cámara
               viewX, viewY, viewZ,  # Punto al que la cámara está mirando
-              1, 0, 0)
+              0, 1, 0)
     
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
