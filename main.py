@@ -3,19 +3,16 @@ from pygame.locals import *
 from OpenGL.GL import *
 from OpenGL.GLU import *
 from OpenGL.GLUT import *
-
 import math
 import sys
 
 screen_width = 1280
 screen_height = 720
-
-DimBoard = 5000
+DimBoard = 500
 
 xPos = 0
 yPos = 250
 zPos = 0
-
 xView = 0
 yView = 250
 zView = 250
@@ -48,8 +45,20 @@ def Axis():
     glEnd()
     glLineWidth(1.0)
 
-def Init():
+def load_texture(image_path):
+    texture_surface = pygame.image.load(image_path)
+    texture_data = pygame.image.tostring(texture_surface, "RGB", True)
+    width, height = texture_surface.get_size()
     
+    texture_id = glGenTextures(1)
+    glBindTexture(GL_TEXTURE_2D, texture_id)
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, texture_data)
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR)
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR)
+    
+    return texture_id
+
+def Init():
     screen = pygame.display.set_mode(
         (screen_width, screen_height), DOUBLEBUF | OPENGL)
     pygame.display.set_caption("Sherman Fury")
@@ -64,12 +73,9 @@ def Init():
               xView, yView, zView,  # Punto al que la cámara está mirando
               0, 1, 0)  # Vector Up
     
-    # gluLookAt(-500, 250, 0,  # Posición de la cámara
-    #           0, 0, 0,  # Punto al que la cámara está mirando
-    #           1, 0, 0)  # Vector Up
-    
-    glClearColor(0, 0, 0, 0)
+    glClearColor(0.5, 0.5, 0.5, 1)
     glEnable(GL_DEPTH_TEST)
+    glEnable(GL_TEXTURE_2D)
     glPolygonMode(GL_FRONT_AND_BACK, GL_FILL)
 
     glLightfv(GL_LIGHT0, GL_POSITION,  (0, 200, 0, 0.0))
@@ -80,41 +86,66 @@ def Init():
     glEnable(GL_COLOR_MATERIAL)
     glShadeModel(GL_SMOOTH)
     
+    global texture_ids
+    texture_ids = {
+        "front": load_texture('Img/Bosquefrente.png'),
+        "left": load_texture('Img/Bosqueizq.png'),
+        "right": load_texture('Img/Bosqueder.png'),
+        "top": load_texture('Img/Bosquearriba.png'),
+        "bottom": load_texture('Img/Bosquepiso.png')
+    }
 
-def PlanoTexturizado():
-    
+def CuboTexturizado():
     glColor3f(1, 1, 1)
-    glEnable(GL_TEXTURE_2D)
-    glBindTexture(GL_TEXTURE_2D)
-    glBegin(GL_QUADS)
-    glTexCoord2f(1.0, 0.0)
-    glVertex3d(0, 0, 0)
-    glTexCoord2f(1.0, 1.0)
-    glVertex3d(0, DimBoard, 0)
-    glTexCoord2f(0.0, 1.0)
-    glVertex3d(DimBoard, DimBoard, 0)
-    glTexCoord2f(0.0, 0.0)
-    glVertex3d(DimBoard, 0, 0)
-    glEnd()
-    glDisable(GL_TEXTURE_2D)
+    
+    def drawface(v0, v1, v2, v3, texture_id):
+        glEnable(GL_TEXTURE_2D)
+        glBindTexture(GL_TEXTURE_2D, texture_id)
+    
+        glBegin(GL_QUADS)
+        glTexCoord2f(0.0, 0.0)
+        glVertex3f(*v0)
+        glTexCoord2f(1.0, 0.0)
+        glVertex3f(*v1)
+        glTexCoord2f(1.0, 1.0)
+        glVertex3f(*v2)
+        glTexCoord2f(0.0, 1.0)
+        glVertex3f(*v3)
+        glEnd()
+    
+        glDisable(GL_TEXTURE_2D)
+
+    half_dim = DimBoard / 2
+    height_offset = half_dim  # Offset to ensure the bottom is at the level of the blue axis
+
+    vertices = {
+        "front":  [(-half_dim, 0,  half_dim), ( half_dim, 0,  half_dim),
+                   ( half_dim,  half_dim * 2,  half_dim), (-half_dim,  half_dim * 2,  half_dim)],
+        "left":   [(-half_dim, 0, -half_dim), (-half_dim, 0,  half_dim),
+                   (-half_dim,  half_dim * 2,  half_dim), (-half_dim,  half_dim * 2, -half_dim)],
+        "right":  [( half_dim, 0,  half_dim), ( half_dim, 0, -half_dim),
+                   ( half_dim,  half_dim * 2, -half_dim), ( half_dim,  half_dim * 2,  half_dim)],
+        "top":    [(-half_dim,  half_dim * 2,  half_dim), ( half_dim,  half_dim * 2,  half_dim),
+                   ( half_dim,  half_dim * 2, -half_dim), (-half_dim,  half_dim * 2, -half_dim)],
+        "bottom": [(-half_dim, 0, -half_dim), ( half_dim, 0, -half_dim),
+                   ( half_dim, 0,  half_dim), (-half_dim, 0,  half_dim)]
+    }
+
+    drawface(vertices["bottom"][0], vertices["bottom"][1], vertices["bottom"][2], vertices["bottom"][3], texture_ids["bottom"])
+    drawface(vertices["front"][0], vertices["front"][1], vertices["front"][2], vertices["front"][3], texture_ids["front"])
+    drawface(vertices["left"][0], vertices["left"][1], vertices["left"][2], vertices["left"][3], texture_ids["left"])
+    drawface(vertices["right"][0], vertices["right"][1], vertices["right"][2], vertices["right"][3], texture_ids["right"])
+    drawface(vertices["top"][0], vertices["top"][1], vertices["top"][2], vertices["top"][3], texture_ids["top"])
 
 projectiles = []
 tanks = []
 
 def display():
-    
     global projectiles
     global tanks
 
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
     Axis()
-    glColor3f(0.3, 0.3, 0.3)
-    glBegin(GL_QUADS)
-    glVertex3d(-DimBoard, 0, -DimBoard)
-    glVertex3d(-DimBoard, 0, DimBoard)
-    glVertex3d(DimBoard, 0, DimBoard)
-    glVertex3d(DimBoard, 0, -DimBoard)
-    glEnd()
     
     tmp = []
     tmpTank = []
@@ -133,10 +164,11 @@ def display():
     projectiles = tmp
     tanks = tmpTank
     
+    # Dibujar cubo texturizado
+    CuboTexturizado()
+    
     # print(len(projectiles))
     print(len(tanks))
-    
-    
     
 
 Init()
@@ -146,14 +178,11 @@ done = False
 shotAngleYZ = 0
 
 while not done:
-
     display()
-
     pygame.display.flip()
     pygame.time.wait(50)
 
     for event in pygame.event.get():
-        
         if event.type == pygame.QUIT:
             done = True
         
