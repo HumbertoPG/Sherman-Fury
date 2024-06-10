@@ -22,7 +22,7 @@ FOVY = 60.0
 ZNEAR = 0.01
 ZFAR = 2000.0
 EYE_X = 300.0
-EYE_Y = 200.0
+EYE_Y = 150.0
 EYE_Z = 300.0
 CENTER_X = 0
 CENTER_Y = 0
@@ -46,9 +46,11 @@ theta = 0.0
 radius = 300
 
 textures = []
-filename1 = "pruebas-generales/sky.jpg"
+filename1 = "sky.jpg"
+music_file = "intro_sound.mp3"
 
 pygame.init()
+pygame.mixer.init()
 
 def Axis():
     glShadeModel(GL_FLAT)
@@ -89,7 +91,7 @@ def Texturas(filepath):
 
 def draw_skybox():
     glDisable(GL_DEPTH_TEST)  # Disable depth testing so skybox is always in the background
-    size = 1000.0  # Skybox size
+    size = 600.0  # Skybox size
     
     glColor3f(1.0,1.0,1.0)
     glEnable(GL_TEXTURE_2D)
@@ -154,7 +156,6 @@ def Init():
     glEnable(GL_DEPTH_TEST)
     glPolygonMode(GL_FRONT_AND_BACK, GL_FILL)
 
-    
     Texturas(filename1)  # Asegúrate de que tienes un archivo llamado sky.jpg en tu directorio
 
     glLightfv(GL_LIGHT0, GL_POSITION, (0, 200, 0, 0.0))
@@ -164,7 +165,7 @@ def Init():
     glEnable(GL_LIGHT0)
     glEnable(GL_COLOR_MATERIAL)
     glShadeModel(GL_SMOOTH)  # most obj files expect to be smooth-shaded
-    objetos.append(OBJ("pruebas-generales/Vivianna_Corporate_Park.obj", swapyz=True))
+    objetos.append(OBJ("Vivianna_Corporate_Park.obj", swapyz=True))
     objetos[0].generate()
 
 def lookat():
@@ -203,8 +204,38 @@ def display():
 
     displayobj()
 
+def cinematica():
+    global theta, radius, EYE_Y
+    frames = 300  # Duración de la cinemática en frames
+    
+    pygame.mixer.music.load(music_file)  # Carga la música
+    pygame.mixer.music.play()  # Reproduce la música
+    
+    for i in range(frames):
+        theta += 0.25  # Ajusta el valor para un giro más rápido o más lento
+        radius -= (300 - 1) / frames  # Reduce el radio
+        EYE_Y = 150 - (120 - 10) * (i / frames)  # Disminuye la altura
+        lookat()
+        display()
+        pygame.display.flip()
+        pygame.time.wait(3)  # Ajusta el valor para controlar la velocidad de la cinemática
+    
+    # Movimiento vertical al final de la cinemática
+    end_frames = 140  # Duración del movimiento vertical en frames
+    amplitude = 10  # Amplitud del movimiento vertical
+
+    for i in range(end_frames):
+        EYE_Y = EYE_Y + amplitude * math.sin(math.pi * 2 * i / end_frames)
+        lookat()
+        display()
+        pygame.display.flip()
+    pygame.mixer.music.stop()  # Detiene la música al final de la cinemática
+
+
 done = False
 Init()
+cinematica() # Ejecuta la cinemática antes de empezar el juego
+pygame.time.wait(200) 
 while not done:
     keys = pygame.key.get_pressed()
     # avanzar observador
