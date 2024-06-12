@@ -43,7 +43,7 @@ class Projectile:
             glRotatef(-90, 1.0, 0.0, 0.0)
             glScalef(2.0, 2.0, 2.0)
             glRotatef(self.deg_sun, 0.0, 0.0, 1.0)
-            gluSphere(sphere, 1.0, 16, 16)
+            gluSphere(sphere, 0.2, 5, 5)
             self.deg_sun += 1.0
             if self.deg_sun >= 360.0:
                 self.deg_sun = 0.0

@@ -37,6 +37,15 @@ Y_MAX = 500
 Z_MIN = -500
 Z_MAX = 500
 DimBoard = 600
+distance1 = 0
+distance2 = 0
+distance3 = 0
+flag1 = True
+flag2 = True
+flag3 = True
+displacement1= -90.0
+displacement2= -110.0
+displacement3= -130.0
 
 objetos = []
 proyectiles = []
@@ -49,15 +58,9 @@ shotAngleYZ = 23
 textures = []
 
 filename1 = "pruebas-generales/sky.jpg"
-#music_file = "pruebas-generales/intro_sound.mp3"
-#move_sound_file = "pruebas-generales/move_sound.mp3"
 
 pygame.init()
-pygame.mixer.init()
 
-# Cargar sonido de movimiento
-#move_sound = pygame.mixer.Sound(move_sound_file)
-#move_sound_channel = pygame.mixer.Channel(0)
 
 def Axis():
     glShadeModel(GL_FLAT)
@@ -178,6 +181,10 @@ def Init():
     objetos.append(OBJ("pruebas-generales/T72Tank.obj", swapyz=True))
     objetos[1].generate()
     objetos.append(OBJ("pruebas-generales/T72TankEnemy.obj", swapyz = True))
+    objetos.append(OBJ("pruebas-generales/T72TankEnemy.obj", swapyz = True))
+    objetos.append(OBJ("pruebas-generales/T72TankEnemy.obj", swapyz = True))
+    objetos.append(OBJ("pruebas-generales/T72TankEnemy.obj", swapyz = True))
+    
 
 def lookat():
     global EYE_X
@@ -212,14 +219,30 @@ def displayMain():
     
     
 def displayEnemies():
-    glPushMatrix()
-    glColor3f(0.3, 0.3, 0.3)
-    glRotatef(-90.0, 1.0, 0.0, 0.0)
-    glTranslatef(4.0, -100.0, 6.0)
-    glScale(0.5, 0.5, 0.5)
-    objetos[2].render()
-    glPopMatrix()
-    
+    if flag1 == True:
+        glPushMatrix()
+        glColor3f(0.3, 0.3, 0.3)
+        glRotatef(-90.0, 1.0, 0.0, 0.0)
+        glTranslatef(4.0, displacement1 + distance1 , 6.0)
+        glScale(0.5, 0.5, 0.5)
+        objetos[2].render()
+        glPopMatrix()
+    if flag2 == True:
+        glPushMatrix()
+        glColor3f(0.3, 0.3, 0.3)
+        glRotatef(-90.0, 1.0, 0.0, 0.0)
+        glTranslatef(8.0, displacement2 + distance2, 6.0)
+        glScale(0.5, 0.5, 0.5)
+        objetos[3].render()
+        glPopMatrix()
+    if flag3 == True:
+        glPushMatrix()
+        glColor3f(0.3, 0.3, 0.3)
+        glRotatef(-90.0, 1.0, 0.0, 0.0)
+        glTranslatef(0.0, displacement3 + distance3, 6.0)
+        glScale(0.5, 0.5, 0.5)
+        objetos[4].render()
+        glPopMatrix()
     
 
 def display():
@@ -238,59 +261,15 @@ def display():
     displayScenario()
     displayMain()  
     displayEnemies()
-
-
-#def cinematica():
-#    global theta, radius, EYE_Y, EYE_Z, EYE_X, CENTER_X, CENTER_Y, CENTER_Z, UP_X, UP_Y, UP_Z
-#    frames = 291  # Duración de la cinemática en frames
-#    
-##    pygame.mixer.music.load(music_file)  # Carga la música
-##    pygame.mixer.music.play()  # Reproduce la música
-#    
-#    for i in range(frames):
-#        theta += 0.25  # Ajusta el valor para un giro más rápido o más lento
-#        radius -= (300 - 1) / frames  # Reduce el radio
-#        EYE_Y = 150 - (120 - 10) * (i / frames)  # Disminuye la altura
-#        lookat()
-#        display()
-#        pygame.display.flip()
-#        pygame.time.wait(3)  # Ajusta el valor para controlar la velocidad de la cinemática
-#    
-#    # Movimiento vertical al final de la cinemática
-#    end_frames = 140  # Duración del movimiento vertical en frames
-#    amplitude = 10  # Amplitud del movimiento vertical
-#
-#    for i in range(end_frames):
-#        EYE_Y = EYE_Y + amplitude * math.sin(math.pi * 2 * i / end_frames)
-#        lookat()
-#        display()
-#        pygame.display.flip()
-#    glLoadIdentity()
-#    EYE_X = 4.0
-#    EYE_Y = 7.0
-#    EYE_Z = 5.0
-#    CENTER_X = 4.0
-#    CENTER_Y = 0.0
-#    CENTER_Z = 300.0
-#    UP_X = 0.0
-#    UP_Y = 1.0
-#    UP_Z = 0.0
-#    gluLookAt(EYE_X, EYE_Y, EYE_Z, CENTER_X, CENTER_Y, CENTER_Z, UP_X, UP_Y, UP_Z)
-##    pygame.mixer.music.stop()  # Detiene la música al final de la cinemática
-
-def updateObjects():
+    
     for proyectil in proyectiles:
         proyectil.draw()
 
+
+
 done = False
-Init()
-# Ejecuta la cinemática antes de empezar el juego
-#cinematica()  
-display()
-pygame.display.flip()
-pygame.time.wait(200)
+Init() 
 while not done:
-    
     for event in pygame.event.get():
         if event.type == pygame.KEYDOWN:
             if event.key == pygame.K_ESCAPE:
@@ -307,36 +286,41 @@ while not done:
     # avanzar observador
     if keys[pygame.K_d]:
         if EYE_X > -0.4:
-            EYE_X -= 0.03
+            EYE_X -= 0.06
         glLoadIdentity()
         gluLookAt(EYE_X, EYE_Y, EYE_Z, CENTER_X, CENTER_Y, CENTER_Z, UP_X, UP_Y, UP_Z)
-#        if not move_sound_channel.get_busy():
-#            move_sound_channel.play(move_sound, loops=-1)
+
     elif keys[pygame.K_a]:
         if EYE_X < 8.4:
-            EYE_X += 0.03
+            EYE_X += 0.06
         glLoadIdentity()
         gluLookAt(EYE_X, EYE_Y, EYE_Z, CENTER_X, CENTER_Y, CENTER_Z, UP_X, UP_Y, UP_Z)
-#        if not move_sound_channel.get_busy():
-#            move_sound_channel.play(move_sound, loops=-1)
+
     elif keys[pygame.K_s]:
         if EYE_Z > 2.0:
-            EYE_Z -= 0.03
+            EYE_Z -= 0.06
         glLoadIdentity()
         gluLookAt(EYE_X, EYE_Y, EYE_Z, CENTER_X, CENTER_Y, CENTER_Z, UP_X, UP_Y, UP_Z)
-#        if not move_sound_channel.get_busy():
-#            move_sound_channel.play(move_sound, loops=-1)
+
     elif keys[pygame.K_w]:
         if EYE_Z < 200.0:
-            EYE_Z += 0.03
+            EYE_Z += 0.06
         glLoadIdentity()
         gluLookAt(EYE_X, EYE_Y, EYE_Z, CENTER_X, CENTER_Y, CENTER_Z, UP_X, UP_Y, UP_Z)
-#        if not move_sound_channel.get_busy():
-#            move_sound_channel.play(move_sound, loops=-1)
-#    else:
-#        move_sound_channel.stop()
 
-    updateObjects()
+    distance1 +=1
+    distance2 +=1
+    distance3 +=1
+    
+    if displacement1 + distance1 == -10:
+        flag1 = False
+    if displacement2 + distance2 == -10:
+        flag2 = False
+    if displacement3 + distance3 == -10:
+        flag3 = False
+        
+    
+    display()
 
     pygame.display.flip()
     pygame.time.wait(10)
