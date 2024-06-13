@@ -4,11 +4,15 @@ from OpenGL.GLUT import *
 
 import math
 
+
 class Projectile:
+    
     
     def __init__(self, x, y, z, angleYZ):
         
         self.flag = True
+        
+        self.radius = 0.5
 
         self.x_pos = x
         self.y_pos = y
@@ -23,7 +27,7 @@ class Projectile:
 
     def draw(self):
         
-        if self.flag:
+        if self.flag==True:
         
             sphere = gluNewQuadric()
 
@@ -39,11 +43,11 @@ class Projectile:
 
             glPushMatrix()  # Guarda la matriz de transformación actual
             glTranslatef(self.x_pos, self.y_pos, self.z_pos)
-            glColor3f(0.7, 0.7, 0.7)
+            glColor3f(1.0, 0.0, 0.0)
             glRotatef(-90, 1.0, 0.0, 0.0)
             glScalef(2.0, 2.0, 2.0)
             glRotatef(self.deg_sun, 0.0, 0.0, 1.0)
-            gluSphere(sphere, 0.2, 5, 5)
+            gluSphere(sphere, self.radius, 16, 16)
             self.deg_sun += 1.0
             if self.deg_sun >= 360.0:
                 self.deg_sun = 0.0
@@ -51,5 +55,6 @@ class Projectile:
 
             self.t += self.dt
 
-            if self.y_pos < 0:
+            if self.y_pos < 0 or self.z_pos>600:
                 self.flag = False
+    

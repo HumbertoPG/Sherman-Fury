@@ -176,13 +176,16 @@ def Init():
     glEnable(GL_LIGHT0)
     glEnable(GL_COLOR_MATERIAL)
     glShadeModel(GL_SMOOTH)  # most obj files expect to be smooth-shaded
-    objetos.append(OBJ("pruebas-generales/Vivianna_Corporate_Park.obj", swapyz=True))
-    objetos[0].generate()
+#    objetos.append(OBJ("pruebas-generales/Vivianna_Corporate_Park.obj", swapyz=True))
+#    objetos[0].generate()
     objetos.append(OBJ("pruebas-generales/T72Tank.obj", swapyz=True))
+    objetos[0].generate()
+    objetos.append(OBJ("pruebas-generales/T72TankEnemy.obj", swapyz = True))
     objetos[1].generate()
     objetos.append(OBJ("pruebas-generales/T72TankEnemy.obj", swapyz = True))
+    objetos[2].generate()
     objetos.append(OBJ("pruebas-generales/T72TankEnemy.obj", swapyz = True))
-    objetos.append(OBJ("pruebas-generales/T72TankEnemy.obj", swapyz = True))
+    objetos[3].generate()
     objetos.append(OBJ("pruebas-generales/T72TankEnemy.obj", swapyz = True))
     
 
@@ -194,18 +197,30 @@ def lookat():
     EYE_Z = radius * (-math.sin(math.radians(theta)) + math.cos(math.radians(theta)))
     glLoadIdentity()
     gluLookAt(EYE_X, EYE_Y, EYE_Z, CENTER_X, CENTER_Y, CENTER_Z, UP_X, UP_Y, UP_Z)
+    
+    
+def decay_player1_health():
+    global player_health_1
+    if player_health_1 == 100:
+        player_health_1 = 75
+    elif player_health_1 == 75:
+        player_health_1 = 50
+    elif player_health_1 == 50:
+        player_health_1 = 25
+    else:
+        player_health_1 = 0
 
-def displayScenario():
-    glPushMatrix()
-    # Correcciones para dibujar el objeto en plano XZ
-    # Esto depende de cada objeto
-    glColor3f(0.2, 0.2, 0.2)
-    glRotatef(-90.0, 1.0, 0.0, 0.0)
-    glRotatef(45.0, 0.0, 0.0, 1.0)
-    glTranslatef(-275.0, 200.0, 5.0)
-    glScale(0.015, 0.015, 0.015)
-    objetos[0].render()
-    glPopMatrix()
+#def displayScenario():
+#    glPushMatrix()
+#    # Correcciones para dibujar el objeto en plano XZ
+#    # Esto depende de cada objeto
+#    glColor3f(0.2, 0.2, 0.2)
+#    glRotatef(-90.0, 1.0, 0.0, 0.0)
+#    glRotatef(45.0, 0.0, 0.0, 1.0)
+#    glTranslatef(-275.0, 200.0, 5.0)
+#    glScale(0.015, 0.015, 0.015)
+#    objetos[0].render()
+#    glPopMatrix()
 
 def displayMain():
     glPushMatrix()
@@ -258,12 +273,34 @@ def display():
     glVertex3d(DimBoard, 0, -DimBoard)
     glEnd()
 
-    displayScenario()
+#    displayScenario()
     displayMain()  
     displayEnemies()
     
     for proyectil in proyectiles:
         proyectil.draw()
+        check_collision(proyectil)
+        if proyectil.y_pos < 0 or proyectil.z_pos > 600:
+            proyectiles.remove(proyectil)
+
+def check_collision(proyectil):
+    global flag1, flag2, flag3
+    if flag1:
+        if check_proyectil_collision_with_enemy(proyectil, 4.0, displacement1 + distance1, 6.0, 2):
+            flag1 = False
+    if flag2:
+        if check_proyectil_collision_with_enemy(proyectil, 8.0, displacement2 + distance2, 6.0, 1):
+            flag2 = False
+    if flag3:
+        if check_proyectil_collision_with_enemy(proyectil, 0.0, displacement3 + distance3, 6.0, 3):
+            flag3 = False
+
+def check_proyectil_collision_with_enemy(proyectil, enemy_x, enemy_y, enemy_z, tank):
+    distance = math.sqrt((proyectil.x_pos - enemy_x)**2 + (proyectil.z_pos - (-1*enemy_y))**2 + (proyectil.y_pos - enemy_z)**2)
+    print(f"x_p: {proyectil.x_pos} y_p: {proyectil.z_pos} z_p: {proyectil.y_pos}")
+    print(f"x_t{tank}: {enemy_x} y_t{tank}: {-1*enemy_y} z_t{tank}: {enemy_z}")
+    print(distance)
+    return distance < proyectil.radius + 2  # assuming a collision radius of 10 units for the enemy
 
 
 
@@ -278,9 +315,9 @@ while not done:
                 proyectiles.append(Projectile(EYE_X, EYE_Y, EYE_Z, shotAngleYZ))
                 
     keys = pygame.key.get_pressed()
-    if keys[pygame.K_DOWN] and shotAngleYZ > 0:
+    if keys[pygame.K_DOWN] and shotAngleYZ > -100:
         shotAngleYZ -= 1
-    if keys[pygame.K_UP] and shotAngleYZ < 23:
+    if keys[pygame.K_UP] and shotAngleYZ < 100:
         shotAngleYZ += 1
 
     # avanzar observador
@@ -308,9 +345,9 @@ while not done:
         glLoadIdentity()
         gluLookAt(EYE_X, EYE_Y, EYE_Z, CENTER_X, CENTER_Y, CENTER_Z, UP_X, UP_Y, UP_Z)
 
-    distance1 +=1
-    distance2 +=1
-    distance3 +=1
+    distance1 +=0.2
+    distance2 +=0.2
+    distance3 +=0.2
     
     if displacement1 + distance1 == -10:
         flag1 = False
