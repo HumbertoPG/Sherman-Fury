@@ -37,13 +37,14 @@ distance3 = 0
 flag1 = True
 flag2 = True
 flag3 = True
-speed1 = 0.2
-speed2 = 0.2
-speed3 = 0.2
+speed1 = 4.2
+speed2 = 4.2
+speed3 = 4.2
 displacement1 = -170.0
 displacement2 = -170.0
 displacement3 = -170.0
 player_health = 100
+score = 0  # Variable para el puntaje
 
 objetos = []
 proyectiles = []
@@ -56,12 +57,13 @@ shotAngleYZ = 23
 textures = []
 filename1 = "sky.jpg"
 move_sound_file = "move_sound.mp3"
+explosion_sound_file = "explosion.mp3"
 
 pygame.init()
 pygame.mixer.init()
 move_sound = pygame.mixer.Sound(move_sound_file)
 move_sound_channel = pygame.mixer.Channel(0)
-
+explosion_sound = pygame.mixer.Sound(explosion_sound_file)
 
 def Axis():
     glShadeModel(GL_FLAT)
@@ -336,23 +338,26 @@ def display():
 
 
 def check_collision(proyectil):
-    global flag1, flag2, flag3
+    global flag1, flag2, flag3, score
     if flag1:
         if check_proyectil_collision_with_enemy(proyectil, 4.0, displacement1 + distance1, 6.0, 2):
             flag1 = False
+            explosion_sound.play()
+            score += 100
     if flag2:
         if check_proyectil_collision_with_enemy(proyectil, 8.0, displacement2 + distance2, 6.0, 1):
             flag2 = False
+            explosion_sound.play()
+            score += 100
     if flag3:
         if check_proyectil_collision_with_enemy(proyectil, 0.0, displacement3 + distance3, 6.0, 3):
             flag3 = False
+            explosion_sound.play()
+            score += 100
 
 
 def check_proyectil_collision_with_enemy(proyectil, enemy_x, enemy_y, enemy_z, tank):
     distance = math.sqrt((proyectil.x_pos - enemy_x) ** 2 + (proyectil.z_pos - (-1 * enemy_y)) ** 2 + (proyectil.y_pos - enemy_z) ** 2)
-#    print(f"x_p: {proyectil.x_pos} y_p: {proyectil.z_pos} z_p: {proyectil.y_pos}")
-#    print(f"x_t{tank}: {enemy_x} y_t{tank}: {-1 * enemy_y} z_t{tank}: {enemy_z}")
-#    print(distance)
     return distance < proyectil.radius + 2
 
 
@@ -364,12 +369,20 @@ def reset_enemy(enemy_flag, enemy_distance, speed):
     return enemy_flag, enemy_distance, speed
 
 
+def game_over():
+    print("Gracias por jugar Sherman Fury")
+    print(f"Puntaje obtenido: {score}")
+    pygame.quit()
+    sys.exit()
+
+
 done = False
 Init()
 while not done:
     for event in pygame.event.get():
         if event.type == pygame.KEYDOWN:
             if event.key == pygame.K_ESCAPE:
+                game_over()
                 done = True
             if event.key == pygame.K_SPACE:
                 proyectiles.append(Projectile(EYE_X, EYE_Y, EYE_Z, shotAngleYZ))
@@ -398,7 +411,6 @@ while not done:
     else:
         move_sound_channel.stop()
 
-
     if not flag1:
         flag1, distance1, speed1 = reset_enemy(flag1, distance1, speed1)
     if not flag2:
@@ -424,6 +436,11 @@ while not done:
             flag3 = False
 
     display()
+
+    if player_health <= 0:
+        game_over()
+        done = True
+
     pygame.display.flip()
     pygame.time.wait(10)
 
