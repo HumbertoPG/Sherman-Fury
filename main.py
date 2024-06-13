@@ -46,6 +46,7 @@ flag3 = True
 displacement1= -90.0
 displacement2= -110.0
 displacement3= -130.0
+player_health = 100
 
 objetos = []
 proyectiles = []
@@ -199,17 +200,51 @@ def lookat():
     gluLookAt(EYE_X, EYE_Y, EYE_Z, CENTER_X, CENTER_Y, CENTER_Z, UP_X, UP_Y, UP_Z)
     
     
-def decay_player1_health():
-    global player_health_1
-    if player_health_1 == 100:
-        player_health_1 = 75
-    elif player_health_1 == 75:
-        player_health_1 = 50
-    elif player_health_1 == 50:
-        player_health_1 = 25
+def decay_player_health():
+    global player_health
+    if player_health == 100:
+        player_health = 75
+    elif player_health == 75:
+        player_health = 50
+    elif player_health == 50:
+        player_health = 25
     else:
-        player_health_1 = 0
+        player_health = 0
 
+def draw_health_triangle(health):
+    glMatrixMode(GL_PROJECTION)
+    glPushMatrix()
+    glLoadIdentity()
+    glOrtho(0, screen_width, 0, screen_height, -1, 1)
+    glMatrixMode(GL_MODELVIEW)
+    glPushMatrix()
+    glLoadIdentity()
+
+    size = 50
+    x = screen_width - size - 70
+    y = size + 90
+
+    if health == 100:
+        glColor3f(0.0, 1.0, 0.0)  # Verde
+    elif health == 75:
+        glColor3f(1.0, 1.0, 0.0)  # Amarillo
+    elif health == 50:
+        glColor3f(1.0, 0.5, 0.0)  # Naranja
+    elif health == 25:
+        glColor3f(1.0, 0.0, 0.0)  # Rojo
+    else:
+        glColor3f(0.5, 0.5, 0.5)  # Gris
+
+    glBegin(GL_TRIANGLES)
+    glVertex2f(x, y + size)
+    glVertex2f(x - size, y - size)
+    glVertex2f(x + size, y - size)
+    glEnd()
+
+    glMatrixMode(GL_PROJECTION)
+    glPopMatrix()
+    glMatrixMode(GL_MODELVIEW)
+    glPopMatrix()
 #def displayScenario():
 #    glPushMatrix()
 #    # Correcciones para dibujar el objeto en plano XZ
@@ -282,6 +317,7 @@ def display():
         check_collision(proyectil)
         if proyectil.y_pos < 0 or proyectil.z_pos > 600:
             proyectiles.remove(proyectil)
+    draw_health_triangle(player_health)
 
 def check_collision(proyectil):
     global flag1, flag2, flag3
@@ -333,29 +369,34 @@ while not done:
         glLoadIdentity()
         gluLookAt(EYE_X, EYE_Y, EYE_Z, CENTER_X, CENTER_Y, CENTER_Z, UP_X, UP_Y, UP_Z)
 
-    elif keys[pygame.K_s]:
-        if EYE_Z > 2.0:
-            EYE_Z -= 0.06
-        glLoadIdentity()
-        gluLookAt(EYE_X, EYE_Y, EYE_Z, CENTER_X, CENTER_Y, CENTER_Z, UP_X, UP_Y, UP_Z)
-
-    elif keys[pygame.K_w]:
-        if EYE_Z < 200.0:
-            EYE_Z += 0.06
-        glLoadIdentity()
-        gluLookAt(EYE_X, EYE_Y, EYE_Z, CENTER_X, CENTER_Y, CENTER_Z, UP_X, UP_Y, UP_Z)
-
-    distance1 +=0.2
-    distance2 +=0.2
-    distance3 +=0.2
-    
-    if displacement1 + distance1 == -10:
-        flag1 = False
-    if displacement2 + distance2 == -10:
-        flag2 = False
-    if displacement3 + distance3 == -10:
-        flag3 = False
-        
+#    elif keys[pygame.K_s]:
+#        if EYE_Z > 2.0:
+#            EYE_Z -= 0.06
+#        glLoadIdentity()
+#        gluLookAt(EYE_X, EYE_Y, EYE_Z, CENTER_X, CENTER_Y, CENTER_Z, UP_X, UP_Y, UP_Z)
+#
+#    elif keys[pygame.K_w]:
+#        if EYE_Z < 200.0:
+#            EYE_Z += 0.06
+#        glLoadIdentity()
+#        gluLookAt(EYE_X, EYE_Y, EYE_Z, CENTER_X, CENTER_Y, CENTER_Z, UP_X, UP_Y, UP_Z)
+    print(player_health)
+    distance1 +=2.2
+    distance2 +=2.2
+    distance3 +=2.2
+    #Verificar llegadas de enemigos a la base
+    if displacement1 + distance1 > -10:
+        if flag1:
+            decay_player_health()
+            flag1 = False
+    if displacement2 + distance2 > -10:
+        if flag2:
+            decay_player_health()
+            flag2 = False
+    if displacement3 + distance3 > -10:
+        if flag3:
+            decay_player_health()
+            flag3 = False
     
     display()
 
