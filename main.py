@@ -37,9 +37,9 @@ distance3 = 0
 flag1 = True
 flag2 = True
 flag3 = True
-speed1 = 4.2
-speed2 = 4.2
-speed3 = 4.2
+speed1 = 0.3
+speed2 = 0.3
+speed3 = 0.3
 displacement1 = -170.0
 displacement2 = -170.0
 displacement3 = -170.0
@@ -64,26 +64,6 @@ pygame.mixer.init()
 move_sound = pygame.mixer.Sound(move_sound_file)
 move_sound_channel = pygame.mixer.Channel(0)
 explosion_sound = pygame.mixer.Sound(explosion_sound_file)
-
-def Axis():
-    glShadeModel(GL_FLAT)
-    glLineWidth(3.0)
-    glColor3f(1.0, 0.0, 0.0)
-    glBegin(GL_LINES)
-    glVertex3f(X_MIN, 0.0, 0.0)
-    glVertex3f(X_MAX, 0.0, 0.0)
-    glEnd()
-    glColor3f(0.0, 1.0, 0.0)
-    glBegin(GL_LINES)
-    glVertex3f(0.0, Y_MIN, 0.0)
-    glVertex3f(0.0, Y_MAX, 0.0)
-    glEnd()
-    glColor3f(0.0, 0.0, 1.0)
-    glBegin(GL_LINES)
-    glVertex3f(0.0, 0.0, Z_MIN)
-    glVertex3f(0.0, 0.0, Z_MAX)
-    glEnd()
-    glLineWidth(1.0)
 
 
 def Texturas(filepath):
@@ -194,14 +174,14 @@ def Init():
     glShadeModel(GL_SMOOTH)
     objetos.append(OBJ("Vivianna_Corporate_Park.obj", swapyz=True))
     objetos[0].generate()
-    objetos.append(OBJ("T72Tank.obj", swapyz=True))
+#    objetos.append(OBJ("T72Tank.obj", swapyz=True))
+#    objetos[1].generate()
+    objetos.append(OBJ("T72TankEnemy.obj", swapyz=True))
     objetos[1].generate()
     objetos.append(OBJ("T72TankEnemy.obj", swapyz=True))
     objetos[2].generate()
     objetos.append(OBJ("T72TankEnemy.obj", swapyz=True))
     objetos[3].generate()
-    objetos.append(OBJ("T72TankEnemy.obj", swapyz=True))
-    objetos[4].generate()
     objetos.append(OBJ("T72TankEnemy.obj", swapyz=True))
 
 
@@ -274,15 +254,7 @@ def displayScenario():
     objetos[0].render()
     glPopMatrix()
 
-def displayMain():
-    glPushMatrix()
-    glColor3f(0.3, 0.3, 0.3)
-    glRotatef(-90.0, 1.0, 0.0, 0.0)
-    glTranslatef(4.0, 0.0, 6.0)
-    glRotatef(180.0, 0.0, 0.0, 1.0)
-    glScale(0.5, 0.5, 0.5)
-    objetos[1].render()
-    glPopMatrix()
+
 
 
 def displayEnemies():
@@ -315,7 +287,6 @@ def displayEnemies():
 def display():
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
     draw_skybox()
-    Axis()
     glColor3f(0.0, 0.3, 0.7)
     glBegin(GL_QUADS)
     glVertex3d(-DimBoard, 0, -DimBoard)
@@ -325,12 +296,11 @@ def display():
     glEnd()
 
     displayScenario()
-    displayMain()
     displayEnemies()
 
     for proyectil in proyectiles:
         proyectil.draw()
-        check_collision(proyectil)
+        check_collision(proyectil)a
         if proyectil.y_pos < 0 or proyectil.z_pos > 600:
             proyectiles.remove(proyectil)
 
@@ -348,7 +318,7 @@ def check_collision(proyectil):
         if check_proyectil_collision_with_enemy(proyectil, 8.0, displacement2 + distance2, 6.0, 1):
             flag2 = False
             explosion_sound.play()
-            score += 100
+            score += 10
     if flag3:
         if check_proyectil_collision_with_enemy(proyectil, 0.0, displacement3 + distance3, 6.0, 3):
             flag3 = False
@@ -364,7 +334,7 @@ def check_proyectil_collision_with_enemy(proyectil, enemy_x, enemy_y, enemy_z, t
 def reset_enemy(enemy_flag, enemy_distance, speed):
     enemy_flag = True
     enemy_distance = 0
-    speed += 0.2
+    speed += 0.3
     pygame.time.wait(500)
     return enemy_flag, enemy_distance, speed
 
@@ -388,9 +358,9 @@ while not done:
                 proyectiles.append(Projectile(EYE_X, EYE_Y, EYE_Z, shotAngleYZ))
 
     keys = pygame.key.get_pressed()
-    if keys[pygame.K_DOWN] and shotAngleYZ > -4:
+    if keys[pygame.K_DOWN] and shotAngleYZ > -3:
         shotAngleYZ -= 4
-    if keys[pygame.K_UP] and shotAngleYZ < 45:
+    if keys[pygame.K_UP] and shotAngleYZ < 25:
         shotAngleYZ += 4
 
     if keys[pygame.K_d]:
