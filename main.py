@@ -1,18 +1,12 @@
 import os
 import pygame
 from pygame.locals import *
-
-# Cargamos las bibliotecas de OpenGL
 from OpenGL.GL import *
 from OpenGL.GLU import *
 from OpenGL.GLUT import *
-
 import math
-
 import sys
 sys.path.append('..')
-
-# Import obj loader
 from objectloader import *
 from Projectile import *
 
@@ -20,7 +14,7 @@ screen_width = 1200
 screen_height = 800
 FOVY = 60.0
 ZNEAR = 0.01
-ZFAR = 2000.0
+ZFAR = 600.0
 EYE_X = 4.0
 EYE_Y = 7.0
 EYE_Z = 5.0
@@ -43,9 +37,12 @@ distance3 = 0
 flag1 = True
 flag2 = True
 flag3 = True
-displacement1= -90.0
-displacement2= -110.0
-displacement3= -130.0
+speed1 = 0.2
+speed2 = 0.2
+speed3 = 0.2
+displacement1 = -170.0
+displacement2 = -170.0
+displacement3 = -170.0
 player_health = 100
 
 objetos = []
@@ -57,34 +54,35 @@ radius = 300
 shotAngleYZ = 23
 
 textures = []
-
-filename1 = "pruebas-generales/sky.jpg"
+filename1 = "sky.jpg"
+move_sound_file = "move_sound.mp3"
 
 pygame.init()
+pygame.mixer.init()
+move_sound = pygame.mixer.Sound(move_sound_file)
+move_sound_channel = pygame.mixer.Channel(0)
 
 
 def Axis():
     glShadeModel(GL_FLAT)
     glLineWidth(3.0)
-    # X axis in red
     glColor3f(1.0, 0.0, 0.0)
     glBegin(GL_LINES)
     glVertex3f(X_MIN, 0.0, 0.0)
     glVertex3f(X_MAX, 0.0, 0.0)
     glEnd()
-    # Y axis in green
     glColor3f(0.0, 1.0, 0.0)
     glBegin(GL_LINES)
     glVertex3f(0.0, Y_MIN, 0.0)
     glVertex3f(0.0, Y_MAX, 0.0)
     glEnd()
-    # Z axis in blue
     glColor3f(0.0, 0.0, 1.0)
     glBegin(GL_LINES)
     glVertex3f(0.0, 0.0, Z_MIN)
     glVertex3f(0.0, 0.0, Z_MAX)
     glEnd()
     glLineWidth(1.0)
+
 
 def Texturas(filepath):
     textures.append(glGenTextures(1))
@@ -100,62 +98,77 @@ def Texturas(filepath):
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, w, h, 0, GL_RGBA, GL_UNSIGNED_BYTE, image_data)
     glGenerateMipmap(GL_TEXTURE_2D)
 
+
 def draw_skybox():
-    glDisable(GL_DEPTH_TEST)  # Disable depth testing so skybox is always in the background
-    size = 600.0  # Skybox size
-    
+    glDisable(GL_DEPTH_TEST)
+    size = 600.0
+
     glColor3f(1.0, 1.0, 1.0)
     glEnable(GL_TEXTURE_2D)
     glBindTexture(GL_TEXTURE_2D, textures[0])
-    
+
     glBegin(GL_QUADS)
-    # Front face
-    glTexCoord2f(0.0, 0.0); glVertex3f(-size, -size, -size)
-    glTexCoord2f(1.0, 0.0); glVertex3f(size, -size, -size)
-    glTexCoord2f(1.0, 1.0); glVertex3f(size, size, -size)
-    glTexCoord2f(0.0, 1.0); glVertex3f(-size, size, -size)
+    glTexCoord2f(0.0, 0.0)
+    glVertex3f(-size, -size, -size)
+    glTexCoord2f(1.0, 0.0)
+    glVertex3f(size, -size, -size)
+    glTexCoord2f(1.0, 1.0)
+    glVertex3f(size, size, -size)
+    glTexCoord2f(0.0, 1.0)
+    glVertex3f(-size, size, -size)
     glEnd()
 
     glBegin(GL_QUADS)
-    # Back face
-    glTexCoord2f(0.0, 0.0); glVertex3f(size, -size, size)
-    glTexCoord2f(1.0, 0.0); glVertex3f(-size, -size, size)
-    glTexCoord2f(1.0, 1.0); glVertex3f(-size, size, size)
-    glTexCoord2f(0.0, 1.0); glVertex3f(size, size, size)
+    glTexCoord2f(0.0, 0.0)
+    glVertex3f(size, -size, size)
+    glTexCoord2f(1.0, 0.0)
+    glVertex3f(-size, -size, size)
+    glTexCoord2f(1.0, 1.0)
+    glVertex3f(-size, size, size)
+    glTexCoord2f(0.0, 1.0)
+    glVertex3f(size, size, size)
     glEnd()
 
     glBegin(GL_QUADS)
-    # Left face
-    glTexCoord2f(0.0, 0.0); glVertex3f(-size, -size, size)
-    glTexCoord2f(1.0, 0.0); glVertex3f(-size, -size, -size)
-    glTexCoord2f(1.0, 1.0); glVertex3f(-size, size, -size)
-    glTexCoord2f(0.0, 1.0); glVertex3f(-size, size, size)
+    glTexCoord2f(0.0, 0.0)
+    glVertex3f(-size, -size, size)
+    glTexCoord2f(1.0, 0.0)
+    glVertex3f(-size, -size, -size)
+    glTexCoord2f(1.0, 1.0)
+    glVertex3f(-size, size, -size)
+    glTexCoord2f(0.0, 1.0)
+    glVertex3f(-size, size, size)
     glEnd()
 
     glBegin(GL_QUADS)
-    # Right face
-    glTexCoord2f(0.0, 0.0); glVertex3f(size, -size, -size)
-    glTexCoord2f(1.0, 0.0); glVertex3f(size, -size, size)
-    glTexCoord2f(1.0, 1.0); glVertex3f(size, size, size)
-    glTexCoord2f(0.0, 1.0); glVertex3f(size, size, -size)
+    glTexCoord2f(0.0, 0.0)
+    glVertex3f(size, -size, -size)
+    glTexCoord2f(1.0, 0.0)
+    glVertex3f(size, -size, size)
+    glTexCoord2f(1.0, 1.0)
+    glVertex3f(size, size, size)
+    glTexCoord2f(0.0, 1.0)
+    glVertex3f(size, size, -size)
     glEnd()
 
     glBegin(GL_QUADS)
-    
-    # Top face
-    glTexCoord2f(0.0, 0.0); glVertex3f(-size, size, -size)
-    glTexCoord2f(1.0, 0.0); glVertex3f(size, size, -size)
-    glTexCoord2f(1.0, 1.0); glVertex3f(size, size, size)
-    glTexCoord2f(0.0, 1.0); glVertex3f(-size, size, size)
+    glTexCoord2f(0.0, 0.0)
+    glVertex3f(-size, size, -size)
+    glTexCoord2f(1.0, 0.0)
+    glVertex3f(size, size, -size)
+    glTexCoord2f(1.0, 1.0)
+    glVertex3f(size, size, size)
+    glTexCoord2f(0.0, 1.0)
+    glVertex3f(-size, size, size)
     glEnd()
 
     glDisable(GL_TEXTURE_2D)
+    glEnable(GL_DEPTH_TEST)
 
-    glEnable(GL_DEPTH_TEST)  # Re-enable depth testing
 
 def Init():
     screen = pygame.display.set_mode((screen_width, screen_height), DOUBLEBUF | OPENGL)
-    pygame.display.set_caption("OpenGL: cubos")
+    pygame.display.set_caption("Sherman Fury")
 
     glMatrixMode(GL_PROJECTION)
     glLoadIdentity()
@@ -168,7 +181,7 @@ def Init():
     glEnable(GL_DEPTH_TEST)
     glPolygonMode(GL_FRONT, GL_FILL)
 
-    Texturas(filename1)  # Asegúrate de que tienes un archivo llamado sky.jpg en tu directorio
+    Texturas(filename1)
 
     glLightfv(GL_LIGHT0, GL_POSITION, (0, 200, 0, 0.0))
     glLightfv(GL_LIGHT0, GL_AMBIENT, (0.5, 0.5, 0.5, 1.0))
@@ -176,19 +189,19 @@ def Init():
     glEnable(GL_LIGHTING)
     glEnable(GL_LIGHT0)
     glEnable(GL_COLOR_MATERIAL)
-    glShadeModel(GL_SMOOTH)  # most obj files expect to be smooth-shaded
-#    objetos.append(OBJ("pruebas-generales/Vivianna_Corporate_Park.obj", swapyz=True))
-#    objetos[0].generate()
-    objetos.append(OBJ("pruebas-generales/T72Tank.obj", swapyz=True))
+    glShadeModel(GL_SMOOTH)
+    objetos.append(OBJ("Vivianna_Corporate_Park.obj", swapyz=True))
     objetos[0].generate()
-    objetos.append(OBJ("pruebas-generales/T72TankEnemy.obj", swapyz = True))
+    objetos.append(OBJ("T72Tank.obj", swapyz=True))
     objetos[1].generate()
-    objetos.append(OBJ("pruebas-generales/T72TankEnemy.obj", swapyz = True))
+    objetos.append(OBJ("T72TankEnemy.obj", swapyz=True))
     objetos[2].generate()
-    objetos.append(OBJ("pruebas-generales/T72TankEnemy.obj", swapyz = True))
+    objetos.append(OBJ("T72TankEnemy.obj", swapyz=True))
     objetos[3].generate()
-    objetos.append(OBJ("pruebas-generales/T72TankEnemy.obj", swapyz = True))
-    
+    objetos.append(OBJ("T72TankEnemy.obj", swapyz=True))
+    objetos[4].generate()
+    objetos.append(OBJ("T72TankEnemy.obj", swapyz=True))
+
 
 def lookat():
     global EYE_X
@@ -198,8 +211,8 @@ def lookat():
     EYE_Z = radius * (-math.sin(math.radians(theta)) + math.cos(math.radians(theta)))
     glLoadIdentity()
     gluLookAt(EYE_X, EYE_Y, EYE_Z, CENTER_X, CENTER_Y, CENTER_Z, UP_X, UP_Y, UP_Z)
-    
-    
+
+
 def decay_player_health():
     global player_health
     if player_health == 100:
@@ -210,6 +223,7 @@ def decay_player_health():
         player_health = 25
     else:
         player_health = 0
+
 
 def draw_health_triangle(health):
     glMatrixMode(GL_PROJECTION)
@@ -225,15 +239,15 @@ def draw_health_triangle(health):
     y = size + 90
 
     if health == 100:
-        glColor3f(0.0, 1.0, 0.0)  # Verde
+        glColor3f(0.0, 1.0, 0.0)
     elif health == 75:
-        glColor3f(1.0, 1.0, 0.0)  # Amarillo
+        glColor3f(1.0, 1.0, 0.0)
     elif health == 50:
-        glColor3f(1.0, 0.5, 0.0)  # Naranja
+        glColor3f(1.0, 0.5, 0.0)
     elif health == 25:
-        glColor3f(1.0, 0.0, 0.0)  # Rojo
+        glColor3f(1.0, 0.0, 0.0)
     else:
-        glColor3f(0.5, 0.5, 0.5)  # Gris
+        glColor3f(0.5, 0.5, 0.5)
 
     glBegin(GL_TRIANGLES)
     glVertex2f(x, y + size)
@@ -245,17 +259,18 @@ def draw_health_triangle(health):
     glPopMatrix()
     glMatrixMode(GL_MODELVIEW)
     glPopMatrix()
-#def displayScenario():
-#    glPushMatrix()
-#    # Correcciones para dibujar el objeto en plano XZ
-#    # Esto depende de cada objeto
-#    glColor3f(0.2, 0.2, 0.2)
-#    glRotatef(-90.0, 1.0, 0.0, 0.0)
-#    glRotatef(45.0, 0.0, 0.0, 1.0)
-#    glTranslatef(-275.0, 200.0, 5.0)
-#    glScale(0.015, 0.015, 0.015)
-#    objetos[0].render()
-#    glPopMatrix()
+
+def displayScenario():
+    glPushMatrix()
+    # Correcciones para dibujar el objeto en plano XZ
+    # Esto depende de cada objeto
+    glColor3f(0.2, 0.2, 0.2)
+    glRotatef(-90.0, 1.0, 0.0, 0.0)
+    glRotatef(45.0, 0.0, 0.0, 1.0)
+    glTranslatef(-275.0, 200.0, 5.0)
+    glScale(0.015, 0.015, 0.015)
+    objetos[0].render()
+    glPopMatrix()
 
 def displayMain():
     glPushMatrix()
@@ -266,18 +281,18 @@ def displayMain():
     glScale(0.5, 0.5, 0.5)
     objetos[1].render()
     glPopMatrix()
-    
-    
+
+
 def displayEnemies():
-    if flag1 == True:
+    if flag1:
         glPushMatrix()
         glColor3f(0.3, 0.3, 0.3)
         glRotatef(-90.0, 1.0, 0.0, 0.0)
-        glTranslatef(4.0, displacement1 + distance1 , 6.0)
+        glTranslatef(4.0, displacement1 + distance1, 6.0)
         glScale(0.5, 0.5, 0.5)
         objetos[2].render()
         glPopMatrix()
-    if flag2 == True:
+    if flag2:
         glPushMatrix()
         glColor3f(0.3, 0.3, 0.3)
         glRotatef(-90.0, 1.0, 0.0, 0.0)
@@ -285,7 +300,7 @@ def displayEnemies():
         glScale(0.5, 0.5, 0.5)
         objetos[3].render()
         glPopMatrix()
-    if flag3 == True:
+    if flag3:
         glPushMatrix()
         glColor3f(0.3, 0.3, 0.3)
         glRotatef(-90.0, 1.0, 0.0, 0.0)
@@ -293,13 +308,12 @@ def displayEnemies():
         glScale(0.5, 0.5, 0.5)
         objetos[4].render()
         glPopMatrix()
-    
+
 
 def display():
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
-    draw_skybox()  # Dibuja el skybox antes de los demás objetos
+    draw_skybox()
     Axis()
-    # Se dibuja el plano gris
     glColor3f(0.0, 0.3, 0.7)
     glBegin(GL_QUADS)
     glVertex3d(-DimBoard, 0, -DimBoard)
@@ -308,16 +322,18 @@ def display():
     glVertex3d(DimBoard, 0, -DimBoard)
     glEnd()
 
-#    displayScenario()
-    displayMain()  
+    displayScenario()
+    displayMain()
     displayEnemies()
-    
+
     for proyectil in proyectiles:
         proyectil.draw()
         check_collision(proyectil)
         if proyectil.y_pos < 0 or proyectil.z_pos > 600:
             proyectiles.remove(proyectil)
+
     draw_health_triangle(player_health)
+
 
 def check_collision(proyectil):
     global flag1, flag2, flag3
@@ -331,17 +347,25 @@ def check_collision(proyectil):
         if check_proyectil_collision_with_enemy(proyectil, 0.0, displacement3 + distance3, 6.0, 3):
             flag3 = False
 
-def check_proyectil_collision_with_enemy(proyectil, enemy_x, enemy_y, enemy_z, tank):
-    distance = math.sqrt((proyectil.x_pos - enemy_x)**2 + (proyectil.z_pos - (-1*enemy_y))**2 + (proyectil.y_pos - enemy_z)**2)
-    print(f"x_p: {proyectil.x_pos} y_p: {proyectil.z_pos} z_p: {proyectil.y_pos}")
-    print(f"x_t{tank}: {enemy_x} y_t{tank}: {-1*enemy_y} z_t{tank}: {enemy_z}")
-    print(distance)
-    return distance < proyectil.radius + 2  # assuming a collision radius of 10 units for the enemy
 
+def check_proyectil_collision_with_enemy(proyectil, enemy_x, enemy_y, enemy_z, tank):
+    distance = math.sqrt((proyectil.x_pos - enemy_x) ** 2 + (proyectil.z_pos - (-1 * enemy_y)) ** 2 + (proyectil.y_pos - enemy_z) ** 2)
+#    print(f"x_p: {proyectil.x_pos} y_p: {proyectil.z_pos} z_p: {proyectil.y_pos}")
+#    print(f"x_t{tank}: {enemy_x} y_t{tank}: {-1 * enemy_y} z_t{tank}: {enemy_z}")
+#    print(distance)
+    return distance < proyectil.radius + 2
+
+
+def reset_enemy(enemy_flag, enemy_distance, speed):
+    enemy_flag = True
+    enemy_distance = 0
+    speed += 0.2
+    pygame.time.wait(500)
+    return enemy_flag, enemy_distance, speed
 
 
 done = False
-Init() 
+Init()
 while not done:
     for event in pygame.event.get():
         if event.type == pygame.KEYDOWN:
@@ -349,42 +373,43 @@ while not done:
                 done = True
             if event.key == pygame.K_SPACE:
                 proyectiles.append(Projectile(EYE_X, EYE_Y, EYE_Z, shotAngleYZ))
-                
-    keys = pygame.key.get_pressed()
-    if keys[pygame.K_DOWN] and shotAngleYZ > -100:
-        shotAngleYZ -= 1
-    if keys[pygame.K_UP] and shotAngleYZ < 100:
-        shotAngleYZ += 1
 
-    # avanzar observador
+    keys = pygame.key.get_pressed()
+    if keys[pygame.K_DOWN] and shotAngleYZ > -4:
+        shotAngleYZ -= 4
+    if keys[pygame.K_UP] and shotAngleYZ < 45:
+        shotAngleYZ += 4
+
     if keys[pygame.K_d]:
         if EYE_X > -0.4:
-            EYE_X -= 0.06
+            EYE_X -= 0.3
         glLoadIdentity()
         gluLookAt(EYE_X, EYE_Y, EYE_Z, CENTER_X, CENTER_Y, CENTER_Z, UP_X, UP_Y, UP_Z)
+        if not move_sound_channel.get_busy():
+            move_sound_channel.play(move_sound, loops=-1)
 
     elif keys[pygame.K_a]:
         if EYE_X < 8.4:
-            EYE_X += 0.06
+            EYE_X += 0.3
         glLoadIdentity()
         gluLookAt(EYE_X, EYE_Y, EYE_Z, CENTER_X, CENTER_Y, CENTER_Z, UP_X, UP_Y, UP_Z)
+        if not move_sound_channel.get_busy():
+            move_sound_channel.play(move_sound, loops=-1)
+    else:
+        move_sound_channel.stop()
 
-#    elif keys[pygame.K_s]:
-#        if EYE_Z > 2.0:
-#            EYE_Z -= 0.06
-#        glLoadIdentity()
-#        gluLookAt(EYE_X, EYE_Y, EYE_Z, CENTER_X, CENTER_Y, CENTER_Z, UP_X, UP_Y, UP_Z)
-#
-#    elif keys[pygame.K_w]:
-#        if EYE_Z < 200.0:
-#            EYE_Z += 0.06
-#        glLoadIdentity()
-#        gluLookAt(EYE_X, EYE_Y, EYE_Z, CENTER_X, CENTER_Y, CENTER_Z, UP_X, UP_Y, UP_Z)
-    print(player_health)
-    distance1 +=2.2
-    distance2 +=2.2
-    distance3 +=2.2
-    #Verificar llegadas de enemigos a la base
+
+    if not flag1:
+        flag1, distance1, speed1 = reset_enemy(flag1, distance1, speed1)
+    if not flag2:
+        flag2, distance2, speed2 = reset_enemy(flag2, distance2, speed2)
+    if not flag3:
+        flag3, distance3, speed3 = reset_enemy(flag3, distance3, speed3)
+
+    distance1 += speed1
+    distance2 += speed2
+    distance3 += speed3
+
     if displacement1 + distance1 > -10:
         if flag1:
             decay_player_health()
@@ -397,9 +422,8 @@ while not done:
         if flag3:
             decay_player_health()
             flag3 = False
-    
-    display()
 
+    display()
     pygame.display.flip()
     pygame.time.wait(10)
 
